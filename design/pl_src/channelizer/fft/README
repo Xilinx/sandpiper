@@ -1,0 +1,74 @@
+
+[//]: # (Copyright (C) 2024, Advanced Micro Devices, Inc. All rights reserved)
+[//]: # (SPDX-License-Identifier: MIT)
+
+Description
+===========
+
+   C++ source code for a single 32 point parallel FFT.
+   Fully pipelined, and a direct implementation of the butterfly diagram
+   (a.k.a. signal flow graph for 32-pt FFT), it takes and produces 32 samples 
+   at every clock cycle.
+
+Directories and Files
+=======
+data : input stimulus and golden expected data files
+&emsp;fftInput.txt: input data for data_mode 'f' (file data)  
+&emsp;fftGoldC.txt: golden expected data for data_mode 'c' (count data)  
+&emsp;fftOutput_16_15.txt: golden expected data for output in ap_fix<16.1>  
+&emsp;fftOutput_27_25.txt: golden expected data for output in ap_fix<27,2>  
+&emsp;twiddelF.txt: twiddle factor data (reference only, since they are internally generated in ffp_top)  
+model : Octave model/util files  
+fft_tb.cpp  : C++ testbench  
+fft_top.cpp : top C++ function fft_top  
+ffp_top.h   : header file for the design  
+hls_config.cfg : configuration file for Vitis run and Make  
+MakeFile : compiles and generates xo  
+README      : this readme file  
+
+Run Examples
+======================
+
+To generate xo:  
+
+    make all
+
+Open a command prompt with vitis tools set up and then run the command below
+    vitis_hls -f run_hls.tcl
+or 
+    vitis -new -w ./ws
+and import hls_config.cfg at the setup stage.
+
+Just run csim at command line:
+
+vitis-run --mode hls --csim --config ./hls_config.cfg --work_dir work
+
+CSYNTH at command line:
+
+v++ -c --mode hls --config ./hls_config.cfg --work_dir work/
+
+Run cosim at command line (CSYNTH should be run first):
+
+vitis-run --mode hls --cosim --config ./hls_config.cfg --work_dir work
+
+#
+
+| FFT Design                       | DSP58<br>(27x18) | DSP<br>% | FF<br>% | LUT<br>% | SSR 32, FFT LEN 32, ap_fixed<32,5> data, ap_fixed<16,1> twiddle factors is what Bachir FFT model desires.<br>Target device:  xcvc1902-vsva2197-2MP-e-S                                                   |
+| -------------------------------- | ---------------- | -------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|                                  |                  |          |         |          |                                                                                                                                                                                                          |
+| HLS implementation               |                  |          |         |          | https://github.com/Xilinx/Sandpiper-development/tree/PHASE3B/hls/fft                                                                                                                                     |
+|     complex mul, ap_fixed<32,5>  | 640              | 32.52    | 2.24    | 5.89     |                                                                                                                                                                                                          |
+|     complex mul,  ap_fixed<27,5> | 480              | 24.39    | 1.56    | 3.91     |                                                                                                                                                                                                          |
+|     scalar mul, ap_fixed<32,6>   | 0                | 0        | 1.49    | 8.22     | ????- seems like hls compiler mapped all multipliers to LUT, "abandoned" mapping to DSP58.                                                                                                               |
+|     scalar mul, ap_fixed<27,6>   | 156              | 7.93     | 0.94    | 3.76     |                                                                                                                                                                                                          |
+| RTL reference design             |                  |          |         |          | [https://github.com/AhmedAalaaa/32-point-FFT-Verilog-design-based-DIT-butterfly-algorithm/tree/main](https://github.com/AhmedAalaaa/32-point-FFT-Verilog-design-based-DIT-butterfly-algorithm/tree/main) |
+|     N=32,Q=16 (ap_fixed<32,16>)  | 512              | 26       | 0.64    | 1.89     |                                                                                                                                                                                                          |
+|     N=27,Q=22  (ap_fixed<27,5>)  | 384              | 19.51    | 0.54    | 1.69     | seems not fully scalable with N, because the DSP estimate is not reduced<br>in half, as expected                                                                                                         |
+| Vitis Library IP                 |                  |          |         |          | [https://xilinx.github.io/Vitis_Libraries/dsp/2022.1/user_guide/L1.html#d-ssr-fft-tests](https://xilinx.github.io/Vitis_Libraries/dsp/2022.1/user_guide/L1.html#d-ssr-fft-tests)                         |
+|     SSR 32 / FFT LEN 32          |                  |          |         |          | error: no matching function!                                                                                                                                                                             |
+|     SSR 32 / FFT LEN 64          |                  |          |         |          | for resource utilization comparison-sake only (this configuration can't be used for our design)                                                                                                          |
+|             ap_fixed<32,5>       | 234              | 11       | 6       | 11       | how come no diff in DSP usage from ap_fixed<27,5> below??                                                                                                                                                |
+|             ap_fixed<27,5>       | 234              | 11       | 5       | 11       |                                                                                                                                                                                                          |
+|     SSR 16 / FFT LEN 32          |                  |          |         |          | for resource utilization comparison-sake only (this configuration can't be used for our "current" design architecture which requires 32 samples at I/O ports every CC of 125MHz)                         |
+|             ap_fixed<32,6>       | 88               | 4        | 3       | 5        | how come no diff in DSP usage from ap_fixed<27,6> below??                                                                                                                                                |
+|             ap_fixed<27,6>       | 88               | 4        | 3       | 5        |                                                                                                                                                                                                          |

@@ -1,0 +1,53 @@
+#
+#Copyright (C) 2024, Advanced Micro Devices, Inc. All rights reserved.
+#SPDX-License-Identifier: MIT
+#
+
+./:
+   - genCubes.m: Cuboids generation script script:
+        > Executes the Simulink model,
+        > Save in binary format the CPI cuboids under ./Cuboids/
+
+   - sendCubes.m: Main simulation script:
+        > Redas the CPI cuboids under ./Cuboid/
+        > Sends via TCP/IP as a Client to the remote server the cuboids 
+          data together the STAP parameters in the header of the frame. 
+          TCP client requires the instrument Control toolbox.
+
+    - setGlobalVAr.m: Sets global variables
+    - getIpAddr.m: Set manually IP address and Port number in this function
+    - directotyContent.txt
+    - ReadMe.txt: This Step/Step guide to run the Model
+
+
+ ./Radar/
+    - extra_stap_blocks.slx: Blocks needed to be added to the Simulink Radar Model: Clutter 
+                             and Jammer mitigation
+    - STAP_Model_Preparation_steps.docx:  Step by Step instructions on how to add onto the 
+                                          Mathworks Radar Model for use in generating Cuboids
+    - xRadarParam.m: Radar and ADPCA simulation parameters
+
+ ./TcpClientListener/
+    - readDataFcn.m: Callback for TCP/IP communication that reads the Z and
+      W vectors received from the remote server and plots the results.
+    - getGlobalVar.m: Gets global variables.
+
+./Plot/
+    - plotParam.m: Defines plotting parameters
+    - plotAngDopResp.m: Scaled-colors image of the Angle/Doppler Response
+      where pixels (angle, Doppler) represent the power spectrum density 
+
+./ADPCA/    
+ - adpcaCanceller.m: Main adpca function.
+ - cellCovMtx.m:Basic Cell covariance-matrix calculator
+ - cpiCovMtx.m: CPI Covariance over the traning cells
+ - qrhhr.m: HouseHolder QR decompostion of a matrix
+ - steeringVector.m: Steering Vector Construction Function 
+ - trainingSets.m: The training cells locator fucntion
+ - upperTrMtxInv.m: Upper triangular matrix inversion
+
+./Cuboids/ 
+ - Stored generated cuboids in binary format:
+    > fileName  = {"cuboid_", num2str(tag = simStep*(k-1)), "x", "cpi.bin"}
+      with "simSetp" as configured in ./Radar/xRadarParam.m
+

@@ -1,0 +1,13 @@
+#
+#Copyright (C) 2024, Advanced Micro Devices, Inc. All rights reserved.
+#SPDX-License-Identifier: MIT
+#
+
+OPTION psf_version = 2.1;
+
+BEGIN DRIVER tc_selector
+	OPTION supported_peripherals = (tc_selector);
+	OPTION copyfiles = all;
+	OPTION VERSION = 1.0;
+	OPTION NAME = tc_selector;
+END DRIVER
